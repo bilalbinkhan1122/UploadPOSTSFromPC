@@ -199,20 +199,21 @@ def login():
     proxies=proxies,
     allow_redirects=False
 )
+ if 'Location' in response.headers and 'campaigns' in response.headers['Location']:
+     adaccount = re.search(r'campaigns\?act=(.*?)&', response.headers['Location'])[1]
+ else:
+     response = requests.get(
+    'https://adsmanager.facebook.com/adsmanager/manage/campaigns',
+    headers=headers,
+    proxies=proxies,
+    allow_redirects=True
+) 
+     adaccount = re.search(r'campaigns\?act=(.*?)&', response.text)[1]
+     
+
+
 
  
-
-
-
-
-
- 
-
- adaccount = re.search(r'campaigns\?act=(.*?)&', response.headers['Location'])[1]
-
-
-
-
 
 
  headers = {
@@ -715,4 +716,3 @@ while True:
  max_workers = int(input('Threads : '))
  group_ids, post_in_group, post_in_page = collect_user_input()
  main(folder_path, start_time_input, delay, max_workers)
-
