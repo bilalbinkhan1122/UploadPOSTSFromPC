@@ -78,34 +78,37 @@ def handle_post_response(response_text):
 
 
 
-    
+
 def add_before_after_message(message):
     before_text = ""
     after_text = ""
 
-    # Read before_message.txt if it exists
+    # Read before_message.txt if it exists, otherwise create it as an empty file
     try:
         with open('before_message.txt', 'r') as before_file:
             before_text = before_file.read()
     except FileNotFoundError:
-        pass  # Ignore if file does not exist
+        with open('before_message.txt', 'w') as before_file:
+            pass  # Create an empty file if not found
 
-    # Read after_message.txt if it exists
+    # Read after_message.txt if it exists, otherwise create it as an empty file
     try:
         with open('after_message.txt', 'r') as after_file:
             after_text = after_file.read()
     except FileNotFoundError:
-        pass  # Ignore if file does not exist
+        with open('after_message.txt', 'w') as after_file:
+            pass  # Create an empty file if not found
 
     # Read main_message.txt if it exists and replace the default message
     try:
         with open('main_message.txt', 'r') as main_message_file:
             main_message = main_message_file.read()
             # Replace default message even if main_message contains only spaces or newlines
-            if main_message != "":
+            if main_message.strip():  # Checking if not just empty spaces or newlines
                 message = main_message
     except FileNotFoundError:
-        pass  # Ignore if file does not exist
+        with open('main_message.txt', 'w') as main_message_file:
+            pass  # Create an empty file if not found
 
     # Construct the final message
     final_message = f"{before_text}{message}{after_text}"
