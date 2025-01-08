@@ -403,38 +403,35 @@ def get_album_title(album_folder):
         with open(title_file_path, "r", encoding="utf-8") as file:
             return file.read().strip()
     return ""
-
 def upload_file(image_path):
-  
-
     url = "https://upload-business.facebook.com/ajax/react_composer/attachments/photo/upload"
     headers = {
-    "Sec-Ch-Ua": "\"Not=A?Brand\";v=\"99\", \"Chromium\";v=\"118\"",
-    "Sec-Ch-Ua-Platform": "\"Windows\"",
-    "Sec-Ch-Ua-Mobile": "?0",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-    "Accept": "*/*",
-    "Origin": "https://business.facebook.com",
-    "Sec-Fetch-Site": "same-site",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Referer": "https://business.facebook.com/",
-    "Accept-Encoding": "deflate",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Cookie": coki
-}
+        "Sec-Ch-Ua": "\"Not=A?Brand\";v=\"99\", \"Chromium\";v=\"118\"",
+        "Sec-Ch-Ua-Platform": "\"Windows\"",
+        "Sec-Ch-Ua-Mobile": "?0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Origin": "https://business.facebook.com",
+        "Sec-Fetch-Site": "same-site",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "https://business.facebook.com/",
+        "Accept-Encoding": "deflate",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cookie": coki
+    }
 
     params = {
-    'av': pgid,
-    '__user': uid,
-    '__a': '1',
-    '__req': '1c',
-    '__hs': '20092.HYP:bizweb_comet_pkg.2.1.0.0.0',
-    'dpr': '1',
-    '__ccg': 'GOOD',
-    'fb_dtsg': fb_dtsg,
-    'qpl_active_flow_ids': '744699792',
-}
+        'av': pgid,
+        '__user': uid,
+        '__a': '1',
+        '__req': '1c',
+        '__hs': '20092.HYP:bizweb_comet_pkg.2.1.0.0.0',
+        'dpr': '1',
+        '__ccg': 'GOOD',
+        'fb_dtsg': fb_dtsg,
+        'qpl_active_flow_ids': '744699792',
+    }
 
     files = {
         "source": (None, "8"),
@@ -444,16 +441,23 @@ def upload_file(image_path):
         "upload_id": (None, "1024")
     }
 
-    response = requests.post(url, headers=headers, files=files, params=params, proxies=proxies)
-    if 'imageSrc' in response.text and 'photoID' in response.text:
-        imgsrc = re.search('"imageSrc":"(.*?)"', response.text)[1].replace('\\/', '/')
-        imgid = re.search('"photoID":"(.*?)"', response.text)[1]
-        encodeurl = encode_url(imgsrc)
-        idnlink = f'%7B%22photo%22%3A%7B%22photo_link_metadata%22%3A%7B%22link%22%3A%7B%22external%22%3A%7B%22url%22%3A%22{encodeurl}%22%7D%7D%7D%2C%22id%22%3A%22{imgid}%22%7D%7D'
-        return idnlink
-    else:
-        return None
-    
+    while True:
+        try:
+            response = requests.post(url, headers=headers, files=files, params=params, proxies=proxies, timeout=10)
+            if 'imageSrc' in response.text and 'photoID' in response.text:
+                imgsrc = re.search('"imageSrc":"(.*?)"', response.text)[1].replace('\\/', '/')
+                imgid = re.search('"photoID":"(.*?)"', response.text)[1]
+                encodeurl = encode_url(imgsrc)
+                idnlink = f'%7B%22photo%22%3A%7B%22photo_link_metadata%22%3A%7B%22link%22%3A%7B%22external%22%3A%7B%22url%22%3A%22{encodeurl}%22%7D%7D%7D%2C%22id%22%3A%22{imgid}%22%7D%7D'
+                return idnlink
+            else:
+                print("Upload failed, retrying...")
+        except requests.exceptions.Timeout:
+            print("Request timed out, retrying...")
+            time.sleep(1)  # Optional: Delay before retrying
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred: {e}, retrying...")
+            time.sleep(1)  # Optional: Delay before retrying
 
 def upload_photos(image_file, unix_timestamp):
     idnlink = upload_file(image_file)
