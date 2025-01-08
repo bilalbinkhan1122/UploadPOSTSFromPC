@@ -443,7 +443,7 @@ def upload_file(image_path):
 
     while True:
         try:
-            response = requests.post(url, headers=headers, files=files, params=params, proxies=proxies, timeout=10)
+            response = requests.post(url, headers=headers, files=files, params=params, proxies=proxies, timeout=60)
             if 'imageSrc' in response.text and 'photoID' in response.text:
                 imgsrc = re.search('"imageSrc":"(.*?)"', response.text)[1].replace('\\/', '/')
                 imgid = re.search('"photoID":"(.*?)"', response.text)[1]
@@ -451,7 +451,7 @@ def upload_file(image_path):
                 idnlink = f'%7B%22photo%22%3A%7B%22photo_link_metadata%22%3A%7B%22link%22%3A%7B%22external%22%3A%7B%22url%22%3A%22{encodeurl}%22%7D%7D%7D%2C%22id%22%3A%22{imgid}%22%7D%7D'
                 return idnlink
             else:
-                print("Upload failed, retrying...")
+                return None
         except requests.exceptions.Timeout:
             print("Request timed out, retrying...")
             time.sleep(1)  # Optional: Delay before retrying
@@ -489,6 +489,8 @@ def upload_albums(album_folder, album_title, unix_timestamp):
                 idnlink.append(upload_link)
             except Exception as e:
                 print(f"Error uploading image {idx} ({image_file}): {e}")
+        if not idnlink:
+            return        
         idnlink = "%2C".join(idnlink)    
         human_readable_date, scheduledpost, type = schedule_post(album_title, idnlink, 'Album', str(unix_timestamp))
         return human_readable_date, scheduledpost, type, album_folder
@@ -522,7 +524,7 @@ def main(folder_path, start_time_str, delay_minutes, max_workers):
                     human_readable_date, scheduled_post, post_type = future.result()
                     print(f"{GREEN}{post_type} Scheduled: {scheduled_post} | {human_readable_date} | {image_file} {RESET}")
                 except Exception as e:
-                    print(f"{RED}Error uploading image ({image_file}): {e}{RESET}")
+                    print(f"{RED}Error uploading ({image_file}): {e}{RESET}")
     
     # Use the updated current_time for album uploads
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
