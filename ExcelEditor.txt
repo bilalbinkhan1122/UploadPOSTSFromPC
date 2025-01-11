@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 
 logo = '''
@@ -8,6 +9,46 @@ logo = '''
 | |___ >  < (_|  __/ | |__| (_| | | || (_) | |   
 |_____/_/\_\___\___|_|_____\__,_|_|\__\___/|_|   
 '''
+
+
+
+
+def merge_excels(input_folder, output_file):
+    """
+    Merges all Excel files in the specified input folder into a single Excel file.
+    
+    Parameters:
+    - input_folder (str): Path to the folder containing Excel files to be merged.
+    - output_file (str): Path to the output Excel file.
+    """
+    all_data = []  # List to store individual DataFrames
+
+    # Loop through all Excel files in the input folder
+    for file in os.listdir(input_folder):
+        if file.endswith(".xlsx") or file.endswith(".xls"):  # Check for Excel files
+            file_path = os.path.join(input_folder, file)
+            print(f"Reading file: {file_path}")
+            
+            # Read the Excel file into a DataFrame
+            df = pd.read_excel(file_path)
+            df['Source File'] = file  # Optional: Add column to track source file
+            all_data.append(df)
+    
+    if not all_data:
+        print("No Excel files found in the specified folder.")
+        return
+
+    # Concatenate all DataFrames
+    merged_df = pd.concat(all_data, ignore_index=True)
+    
+    # Add .xlsx extension if not already provided
+    if not output_file.endswith('.xlsx'):
+        output_file += '.xlsx'
+    
+    # Write the merged DataFrame to a new Excel file
+    merged_df.to_excel(output_file, index=False)
+    print(f"Merged file saved as: {output_file}")
+
 
 def export_and_remove_rows(input_file, output_file):
     """Exports specified rows and removes them from the original file."""
@@ -66,6 +107,8 @@ def main():
     print("1. Export and Remove Rows")
     print("2. Remove Duplicate Rows")
     print("3. Filter Rows by Likes")
+    print("4. Merge Excels into One")
+
 
     choice = input("Enter your choice (1/2/3): ")
     
@@ -83,7 +126,12 @@ def main():
     elif choice == '3':
         file_path = input("Enter the Excel file path (including .xlsx): ")
         filter_likes(file_path)
-    
+
+    elif choice == '4':
+      input_folder = input("Enter the path to the folder containing Excel files: ")
+      output_file = input("Enter the path for the output merged Excel file (without extension): ")
+      merge_excels(input_folder, output_file)    
+
     else:
         print("Invalid choice. Please run the script again.")
 
