@@ -1,0 +1,83 @@
+import os
+from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageFont
+
+# Function to apply filters to an image
+def apply_filters(image):
+    # Apply a brightness filter
+    enhancer = ImageEnhance.Brightness(image)
+    image = enhancer.enhance(1.2)  # Increase brightness by 20%
+    image = image.filter(ImageFilter.DETAIL)
+    return image
+
+# Function to crop 3% from all sides of the image
+def crop_image_by_percentage(image):
+    width, height = image.size
+    crop_width = int(width * 0.03)  # 3% of width
+    crop_height = int(height * 0.03)  # 3% of height
+    cropped_image = image.crop((crop_width, crop_height, width - crop_width, height - crop_height))
+    return cropped_image
+
+# Function to add text to the image
+def add_text(image, text):
+    draw = ImageDraw.Draw(image)
+    
+    # Set font size as a percentage of image height (e.g., 3%)
+    font_percentage = 2.5  # Font size as a percentage out of 100
+    font_size = int(image.height * (font_percentage / 100))
+    
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except IOError:
+        font = ImageFont.load_default()
+
+    # Get text dimensions
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+
+    # Define proportional margins (5% of image width and height)
+    margin_percentage = 5  # Margin as a percentage out of 100
+    margin_x = int(image.width * (margin_percentage / 100))
+    margin_y = int(image.height * (margin_percentage / 100))
+
+    # Calculate text position (bottom-right corner with margin)
+    x = image.width - text_width - margin_x
+    y = image.height - text_height - margin_y
+
+    # Add shadow for better visibility
+    shadow_color = 'black'
+    draw.text((x + 1.5, y + 1.5), text, font=font, fill=shadow_color)
+
+    # Add the actual text
+    text_color = 'white'
+    draw.text((x, y), text, font=font, fill=text_color)
+
+    return image
+
+# Function to process images recursively and replace old images
+def process_images(input_folder, text):
+    supported_formats = ('.jpg', '.jpeg', '.png')  # Supported file types
+    for root, _, files in os.walk(input_folder):
+        for filename in files:
+            if filename.lower().endswith(supported_formats):
+                image_path = os.path.join(root, filename)
+                img = Image.open(image_path)
+
+                cropped_img = crop_image_by_percentage(img)
+                filtered_img = apply_filters(cropped_img)
+                final_img = add_text(filtered_img, text)
+
+                # Replace the old image by saving it in the same path
+                final_img.save(image_path)
+                print(f"Processed and replaced: {image_path}")
+
+# Main function to run the script
+if __name__ == "__main__":
+    input_folder = input("Enter the path to the folder containing images: ")
+    text = input("Enter the text to add: ")
+    # text = "© Classic Cars"
+    if not os.path.exists(input_folder):
+        print(f"The input folder '{input_folder}' does not exist.")
+    else:
+        process_images(input_folder, text)
+        print("Image processing completed.")
